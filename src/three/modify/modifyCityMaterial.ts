@@ -14,6 +14,7 @@ export default function modifyCityMaterial(mesh: any) {
     addGradColor(shader, mesh);
     addSpread(shader);
     addLightLine(shader);
+    addToTopLine(shader);
   };
 }
 
@@ -154,6 +155,46 @@ export function addLightLine(shader: THREE.Shader) {
   gsap.to(shader.uniforms.uLightLineTime, {
     value: 1500,
     duration: 5,
+    ease: "none",
+    repeat: -1,
+  });
+}
+
+// 从下到上
+export function addToTopLine(shader: THREE.Shader) {
+  //   扩散的时间
+  shader.uniforms.uToTopTime = { value: 0 };
+  //   设置条带的宽度
+  shader.uniforms.uToTopWidth = { value: 40 };
+
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "#include <common>",
+    `
+            #include <common>
+      
+            
+            uniform float uToTopTime;
+            uniform float uToTopWidth;
+            `
+  );
+
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "//#end#",
+    `
+          float ToTopMix = -(vPosition.y-uToTopTime)*(vPosition.y-uToTopTime)+uToTopWidth;
+      
+          if(ToTopMix>0.0){
+              gl_FragColor = mix(gl_FragColor,vec4(0.8,0.8,1,1),ToTopMix /uToTopWidth);
+              
+          }
+      
+          //#end#
+          `
+  );
+
+  gsap.to(shader.uniforms.uToTopTime, {
+    value: 500,
+    duration: 3,
     ease: "none",
     repeat: -1,
   });
